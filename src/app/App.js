@@ -270,6 +270,9 @@ class App extends EventEmitter {
 			return false;
 		}
 		if (!this.findRoute(path)) {
+			if (utils.isFragmentNavigate(path)) {
+				return true;
+			}
 			console.log('No route for ' + path);
 			return false;
 		}
@@ -352,6 +355,9 @@ class App extends EventEmitter {
 
 		var route = this.findRoute(path);
 		if (!route) {
+			if (utils.isFragmentNavigate(path)) {
+				this.emit('fragmentNavigate');
+			}
 			this.pendingNavigate = CancellablePromise.reject(new CancellablePromise.CancellationError('No route for ' + path));
 			return this.pendingNavigate;
 		}
@@ -366,6 +372,9 @@ class App extends EventEmitter {
 			.then(() => {
 				if (this.activeScreen) {
 					this.activeScreen.deactivate();
+				}
+				if (utils.isFragmentNavigate(path)) {
+					this.emit('fragmentNavigate');
 				}
 				this.prepareNavigateHistory_(path, nextScreen, opt_replaceHistory);
 				this.prepareNavigateSurfaces_(nextScreen, this.surfaces);
