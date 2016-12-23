@@ -37,12 +37,12 @@ define(['exports', 'metal/src/metal', './dom'], function (exports, _metal, _dom)
 		_createClass(globalEval, null, [{
 			key: 'run',
 			value: function run(text, opt_appendFn) {
-				var script = document.createElement('script');
+				var script = _metal.globals.document.createElement('script');
 				script.text = text;
 				if (opt_appendFn) {
 					opt_appendFn(script);
 				} else {
-					document.head.appendChild(script);
+					_metal.globals.document.head.appendChild(script);
 				}
 				(0, _dom.exitDocument)(script);
 				return script;
@@ -50,7 +50,7 @@ define(['exports', 'metal/src/metal', './dom'], function (exports, _metal, _dom)
 		}, {
 			key: 'runFile',
 			value: function runFile(src, opt_callback, opt_appendFn) {
-				var script = document.createElement('script');
+				var script = _metal.globals.document.createElement('script');
 				script.src = src;
 
 				var callback = function callback() {
@@ -63,7 +63,7 @@ define(['exports', 'metal/src/metal', './dom'], function (exports, _metal, _dom)
 				if (opt_appendFn) {
 					opt_appendFn(script);
 				} else {
-					document.head.appendChild(script);
+					_metal.globals.document.head.appendChild(script);
 				}
 
 				return script;

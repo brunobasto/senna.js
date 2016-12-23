@@ -144,12 +144,29 @@ babelHelpers;
 }).call(this);
 'use strict';
 
-/**
- * A collection of core utility functions.
- * @const
- */
+(function () {
+	var globals = globals || {};
+
+	if (typeof window !== 'undefined') {
+		globals.window = window;
+	}
+
+	if (typeof document !== 'undefined') {
+		globals.document = document;
+	}
+
+	this['senna']['globals'] = globals;
+}).call(this);
+'use strict';
 
 (function () {
+  var globals = this['senna']['globals'];
+
+  /**
+   * A collection of core utility functions.
+   * @const
+   */
+
   var compatibilityModeData_ = void 0;
 
   /**
@@ -222,8 +239,8 @@ babelHelpers;
   function getCompatibilityModeData() {
     // Compatibility mode can be set via the __METAL_COMPATIBILITY__ global var.
     if (compatibilityModeData_ === undefined) {
-      if (typeof window !== 'undefined' && window.__METAL_COMPATIBILITY__) {
-        enableCompatibilityMode(window.__METAL_COMPATIBILITY__);
+      if (typeof globals.window !== 'undefined' && globals.window.__METAL_COMPATIBILITY__) {
+        enableCompatibilityMode(globals.window.__METAL_COMPATIBILITY__);
       }
     }
     return compatibilityModeData_;
@@ -543,7 +560,7 @@ babelHelpers;
 			key: 'remove',
 			value: function remove(arr, obj) {
 				var i = arr.indexOf(obj);
-				var rv;
+				var rv = void 0;
 				if (rv = i >= 0) {
 					array.removeAt(arr, i);
 				}
@@ -598,6 +615,9 @@ babelHelpers;
 'use strict';
 
 (function () {
+	var globals = this['senna']['globals'];
+
+
 	var async = {};
 
 	/**
@@ -726,7 +746,7 @@ babelHelpers;
 	async.nextTick.getSetImmediateEmulator_ = function () {
 		// Create a private message channel and use it to postMessage empty messages
 		// to ourselves.
-		var Channel;
+		var Channel = void 0;
 
 		// Verify if variable is defined on the current runtime (i.e., node, browser).
 		// Can't use typeof enclosed in a function (such as core.isFunction) or an
@@ -740,14 +760,14 @@ babelHelpers;
 		// an iframe based polyfill in browsers that have postMessage and
 		// document.addEventListener. The latter excludes IE8 because it has a
 		// synchronous postMessage implementation.
-		if (typeof Channel === 'undefined' && typeof window !== 'undefined' && window.postMessage && window.addEventListener) {
+		if (typeof Channel === 'undefined' && typeof globals.window !== 'undefined' && globals.window.postMessage && globals.window.addEventListener) {
 			/** @constructor */
 			Channel = function Channel() {
 				// Make an empty, invisible iframe.
-				var iframe = document.createElement('iframe');
+				var iframe = globals.document.createElement('iframe');
 				iframe.style.display = 'none';
 				iframe.src = '';
-				document.documentElement.appendChild(iframe);
+				globals.document.documentElement.appendChild(iframe);
 				var win = iframe.contentWindow;
 				var doc = win.document;
 				doc.open();
@@ -773,29 +793,35 @@ babelHelpers;
 			};
 		}
 		if (typeof Channel !== 'undefined') {
-			var channel = new Channel();
-			// Use a fifo linked list to call callbacks in the right order.
-			var head = {};
-			var tail = head;
-			channel.port1.onmessage = function () {
-				head = head.next;
-				var cb = head.cb;
-				head.cb = null;
-				cb();
-			};
-			return function (cb) {
-				tail.next = {
-					cb: cb
+			var _ret = function () {
+				var channel = new Channel();
+				// Use a fifo linked list to call callbacks in the right order.
+				var head = {};
+				var tail = head;
+				channel.port1.onmessage = function () {
+					head = head.next;
+					var cb = head.cb;
+					head.cb = null;
+					cb();
 				};
-				tail = tail.next;
-				channel.port2.postMessage(0);
-			};
+				return {
+					v: function v(cb) {
+						tail.next = {
+							cb: cb
+						};
+						tail = tail.next;
+						channel.port2.postMessage(0);
+					}
+				};
+			}();
+
+			if ((typeof _ret === 'undefined' ? 'undefined' : babelHelpers.typeof(_ret)) === "object") return _ret.v;
 		}
 		// Implementation for IE6-8: Script elements fire an asynchronous
 		// onreadystatechange event when inserted into the DOM.
-		if (typeof document !== 'undefined' && 'onreadystatechange' in document.createElement('script')) {
+		if (typeof globals.document !== 'undefined' && 'onreadystatechange' in globals.document.createElement('script')) {
 			return function (cb) {
-				var script = document.createElement('script');
+				var script = globals.document.createElement('script');
 				script.onreadystatechange = function () {
 					// Clean up and call the callback.
 					script.onreadystatechange = null;
@@ -804,7 +830,7 @@ babelHelpers;
 					cb();
 					cb = null;
 				};
-				document.documentElement.appendChild(script);
+				globals.document.documentElement.appendChild(script);
 			};
 		}
 		// Fall back to setTimeout with 0. In browsers this creates a delay of 5ms
@@ -893,6 +919,8 @@ babelHelpers;
 'use strict';
 
 (function () {
+	var globals = this['senna']['globals'];
+
 	var object = function () {
 		function object() {
 			babelHelpers.classCallCheck(this, object);
@@ -908,7 +936,8 @@ babelHelpers;
     * @return {Object} Returns the target object reference.
     */
 			value: function mixin(target) {
-				var key, source;
+				var key = void 0,
+				    source = void 0;
 				for (var i = 1; i < arguments.length; i++) {
 					source = arguments[i];
 					for (key in source) {
@@ -929,7 +958,7 @@ babelHelpers;
 		}, {
 			key: 'getObjectByName',
 			value: function getObjectByName(name, opt_obj) {
-				var scope = opt_obj || window;
+				var scope = opt_obj || globals.window;
 				var parts = name.split('.');
 				return parts.reduce(function (part, key) {
 					return part[key];
@@ -1106,6 +1135,7 @@ babelHelpers;
   var array = this['senna']['array'];
   var async = this['senna']['async'];
   var Disposable = this['senna']['Disposable'];
+  var globals = this['senna']['globals'];
   var object = this['senna']['object'];
   var string = this['senna']['string'];
   this['sennaNamed']['metal'] = this['sennaNamed']['metal'] || {};
@@ -1115,6 +1145,7 @@ babelHelpers;
   this['sennaNamed']['metal']['array'] = array;
   this['sennaNamed']['metal']['async'] = async;
   this['sennaNamed']['metal']['Disposable'] = Disposable;
+  this['sennaNamed']['metal']['globals'] = globals;
   this['sennaNamed']['metal']['object'] = object;
   this['sennaNamed']['metal']['string'] = string;
   this['senna']['metal'] = core;
@@ -3526,6 +3557,7 @@ babelHelpers;
 	var isElement = this['sennaNamed']['metal']['isElement'];
 	var isObject = this['sennaNamed']['metal']['isObject'];
 	var isString = this['sennaNamed']['metal']['isString'];
+	var globals = this['sennaNamed']['metal']['globals'];
 	var object = this['sennaNamed']['metal']['object'];
 	var domData = this['senna']['domData'];
 	var DomDelegatedEventHandle = this['senna']['DomDelegatedEventHandle'];
@@ -3712,11 +3744,11 @@ babelHelpers;
                                                      */
 
 	function buildFragment(htmlString) {
-		var tempDiv = document.createElement('div');
+		var tempDiv = globals.document.createElement('div');
 		tempDiv.innerHTML = '<br>' + htmlString;
 		tempDiv.removeChild(tempDiv.firstChild);
 
-		var fragment = document.createDocumentFragment();
+		var fragment = globals.document.createDocumentFragment();
 		while (tempDiv.firstChild) {
 			fragment.appendChild(tempDiv.firstChild);
 		}
@@ -3807,7 +3839,7 @@ babelHelpers;
   * @param {Element} node Element to remove children from.
   */
 	function enterDocument(node) {
-		node && append(document.body, node);
+		node && append(globals.document.body, node);
 	}
 
 	this['sennaNamed']['domNamed']['enterDocument'] = enterDocument; /**
@@ -3922,7 +3954,7 @@ babelHelpers;
                                                    */
 
 	function matchFallback_(element, selector) {
-		var nodes = document.querySelectorAll(selector, element.parentNode);
+		var nodes = globals.document.querySelectorAll(selector, element.parentNode);
 		for (var i = 0; i < nodes.length; ++i) {
 			if (nodes[i] === element) {
 				return true;
@@ -3973,7 +4005,7 @@ babelHelpers;
   */
 	function on(element, eventName, callback, opt_capture) {
 		if (isString(element)) {
-			return delegate(document, eventName, element, callback);
+			return delegate(globals.document, eventName, element, callback);
 		}
 		var customConfig = customEvents[eventName];
 		if (customConfig && customConfig.event) {
@@ -4032,7 +4064,7 @@ babelHelpers;
                                                                                */
 
 	function removeChildren(node) {
-		var child;
+		var child = void 0;
 		while (child = node.firstChild) {
 			node.removeChild(child);
 		}
@@ -4113,7 +4145,7 @@ babelHelpers;
                                                        */
 
 	function stopImmediatePropagation_() {
-		var event = this; // jshint ignore:line
+		var event = this; // eslint-disable-line
 		event.stopped = true;
 		event.stoppedImmediate = true;
 		Event.prototype.stopImmediatePropagation.call(event);
@@ -4124,7 +4156,7 @@ babelHelpers;
   * @private
   */
 	function stopPropagation_() {
-		var event = this; // jshint ignore:line
+		var event = this; // eslint-disable-line
 		event.stopped = true;
 		Event.prototype.stopPropagation.call(event);
 	}
@@ -4142,7 +4174,7 @@ babelHelpers;
 
 		if (isString(element)) {
 			if (!elementsByTag_[element]) {
-				elementsByTag_[element] = document.createElement(element);
+				elementsByTag_[element] = globals.document.createElement(element);
 			}
 			element = elementsByTag_[element];
 		}
@@ -4215,9 +4247,9 @@ babelHelpers;
 			return selectorOrElement;
 		} else if (isString(selectorOrElement)) {
 			if (selectorOrElement[0] === '#' && selectorOrElement.indexOf(' ') === -1) {
-				return document.getElementById(selectorOrElement.substr(1));
+				return globals.document.getElementById(selectorOrElement.substr(1));
 			} else {
-				return document.querySelector(selectorOrElement);
+				return globals.document.querySelector(selectorOrElement);
 			}
 		} else {
 			return null;
@@ -4276,9 +4308,11 @@ babelHelpers;
 			var classIndex = elementClassName.indexOf(className);
 
 			if (classIndex === -1) {
-				elementClassName = elementClassName + classes[i] + ' ';
+				elementClassName = '' + elementClassName + classes[i] + ' ';
 			} else {
-				elementClassName = elementClassName.substring(0, classIndex) + ' ' + elementClassName.substring(classIndex + className.length);
+				var before = elementClassName.substring(0, classIndex);
+				var after = elementClassName.substring(classIndex + className.length);
+				elementClassName = before + ' ' + after;
 			}
 		}
 
@@ -4315,7 +4349,7 @@ babelHelpers;
   */
 	function triggerEvent(element, eventName, opt_eventObj) {
 		if (isAbleToInteractWith_(element, eventName, opt_eventObj)) {
-			var eventObj = document.createEvent('HTMLEvents');
+			var eventObj = globals.document.createEvent('HTMLEvents');
 			eventObj.initEvent(eventName, true, true);
 			object.mixin(eventObj, opt_eventObj);
 			element.dispatchEvent(eventObj);
@@ -4490,6 +4524,7 @@ babelHelpers;
 
 (function () {
 	var append = this['sennaNamed']['dom']['append'];
+	var globals = this['sennaNamed']['metal']['globals'];
 	var string = this['sennaNamed']['metal']['string'];
 
 	/**
@@ -4552,7 +4587,7 @@ babelHelpers;
 			value: function checkAttrOrderChange() {
 				if (features.attrOrderChange_ === undefined) {
 					var originalContent = '<div data-component="" data-ref=""></div>';
-					var element = document.createElement('div');
+					var element = globals.document.createElement('div');
 					append(element, originalContent);
 					features.attrOrderChange_ = originalContent !== element.innerHTML;
 				}
@@ -4562,7 +4597,7 @@ babelHelpers;
 		return features;
 	}();
 
-	features.animationElement_ = document.createElement('div');
+	features.animationElement_ = globals.document.createElement('div');
 	features.animationEventName_ = undefined;
 	features.attrOrderChange_ = undefined;
 
@@ -4572,6 +4607,7 @@ babelHelpers;
 
 (function () {
 	var async = this['sennaNamed']['metal']['async'];
+	var globals = this['sennaNamed']['metal']['globals'];
 	var exitDocument = this['sennaNamed']['dom']['exitDocument'];
 	var once = this['sennaNamed']['dom']['once'];
 
@@ -4595,12 +4631,12 @@ babelHelpers;
     * @return {Element} script
     */
 			value: function run(text, opt_appendFn) {
-				var script = document.createElement('script');
+				var script = globals.document.createElement('script');
 				script.text = text;
 				if (opt_appendFn) {
 					opt_appendFn(script);
 				} else {
-					document.head.appendChild(script);
+					globals.document.head.appendChild(script);
 				}
 				exitDocument(script);
 				return script;
@@ -4619,7 +4655,7 @@ babelHelpers;
 		}, {
 			key: 'runFile',
 			value: function runFile(src, opt_callback, opt_appendFn) {
-				var script = document.createElement('script');
+				var script = globals.document.createElement('script');
 				script.src = src;
 
 				var callback = function callback() {
@@ -4632,7 +4668,7 @@ babelHelpers;
 				if (opt_appendFn) {
 					opt_appendFn(script);
 				} else {
-					document.head.appendChild(script);
+					globals.document.head.appendChild(script);
 				}
 
 				return script;
@@ -4718,6 +4754,7 @@ babelHelpers;
 
 (function () {
 	var async = this['sennaNamed']['metal']['async'];
+	var globals = this['sennaNamed']['metal']['globals'];
 	var once = this['sennaNamed']['dom']['once'];
 
 	/**
@@ -4740,12 +4777,12 @@ babelHelpers;
     * @return {Element} style
     */
 			value: function run(text, opt_appendFn) {
-				var style = document.createElement('style');
+				var style = globals.document.createElement('style');
 				style.innerHTML = text;
 				if (opt_appendFn) {
 					opt_appendFn(style);
 				} else {
-					document.head.appendChild(style);
+					globals.document.head.appendChild(style);
 				}
 				return style;
 			}
@@ -4763,7 +4800,7 @@ babelHelpers;
 		}, {
 			key: 'runFile',
 			value: function runFile(href, opt_callback, opt_appendFn) {
-				var link = document.createElement('link');
+				var link = globals.document.createElement('link');
 				link.rel = 'stylesheet';
 				link.href = href;
 				globalEvalStyles.runStyle(link, opt_callback, opt_appendFn);
@@ -4801,7 +4838,7 @@ babelHelpers;
 				if (opt_appendFn) {
 					opt_appendFn(style);
 				} else {
-					document.head.appendChild(style);
+					globals.document.head.appendChild(style);
 				}
 
 				return style;
@@ -6909,6 +6946,7 @@ babelHelpers;
 	var array = this['sennaNamed']['metal']['array'];
 	var async = this['sennaNamed']['metal']['async'];
 	var core = this['sennaNamed']['metal']['core'];
+	var object = this['sennaNamed']['metal']['object'];
 	var debounce = this['senna']['debounce'];
 	var dom = this['senna']['dom'];
 	var CancellablePromise = this['senna']['Promise'];
@@ -6995,6 +7033,13 @@ babelHelpers;
     * @protected
     */
 			_this.ignoreQueryStringFromRoutePath = false;
+
+			/**
+    * Holds the last state pushed by senna.
+    * @type {?Object}
+    * @protected
+    */
+			_this.lastPushedState = null;
 
 			/**
     * Holds the link selector to define links that are routed.
@@ -7854,6 +7899,12 @@ babelHelpers;
 				}
 
 				if (state.senna) {
+					// If onPopstate_ is called but the event state is equal to the last
+					// state pushed, that means an external app changed the state in the
+					// mean time and we shouldn't do anything here.
+					if (object.shallowEqual(state, this.lastPushedState)) {
+						return;
+					}
 					console.log('History navigation to [' + state.path + ']');
 					this.popstateScrollTop = state.scrollTop;
 					this.popstateScrollLeft = state.scrollLeft;
@@ -8209,6 +8260,7 @@ babelHelpers;
 					globals.window.history.pushState(state, title, path);
 				}
 				globals.document.title = title;
+				this.lastPushedState = state;
 			}
 		}]);
 		return App;
@@ -8375,15 +8427,17 @@ babelHelpers;
 }).call(this);
 'use strict';
 
-/**
- * Metal.js browser user agent detection. It's extremely recommended the usage
- * of feature checking over browser user agent sniffing. Unfortunately, in some
- * situations feature checking can be slow or even impossible, therefore use
- * this utility with caution.
- * @see <a href="http://www.useragentstring.com/">User agent strings</a>.
- */
-
 (function () {
+	var globals = this['sennaNamed']['metal']['globals'];
+
+	/**
+  * Metal.js browser user agent detection. It's extremely recommended the usage
+  * of feature checking over browser user agent sniffing. Unfortunately, in some
+  * situations feature checking can be slow or even impossible, therefore use
+  * this utility with caution.
+  * @see <a href="http://www.useragentstring.com/">User agent strings</a>.
+  */
+
 	var UA = function () {
 		function UA() {
 			babelHelpers.classCallCheck(this, UA);
@@ -8561,9 +8615,7 @@ babelHelpers;
   */
 
 
-	UA.globals = {
-		window: window
-	};
+	UA.globals = globals;
 
 	UA.testUserAgent(UA.getNativeUserAgent(), UA.getNativePlatform());
 

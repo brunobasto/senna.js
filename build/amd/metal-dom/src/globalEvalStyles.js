@@ -37,19 +37,19 @@ define(['exports', 'metal/src/metal', './dom'], function (exports, _metal, _dom)
 		_createClass(globalEvalStyles, null, [{
 			key: 'run',
 			value: function run(text, opt_appendFn) {
-				var style = document.createElement('style');
+				var style = _metal.globals.document.createElement('style');
 				style.innerHTML = text;
 				if (opt_appendFn) {
 					opt_appendFn(style);
 				} else {
-					document.head.appendChild(style);
+					_metal.globals.document.head.appendChild(style);
 				}
 				return style;
 			}
 		}, {
 			key: 'runFile',
 			value: function runFile(href, opt_callback, opt_appendFn) {
-				var link = document.createElement('link');
+				var link = _metal.globals.document.createElement('link');
 				link.rel = 'stylesheet';
 				link.href = href;
 				globalEvalStyles.runStyle(link, opt_callback, opt_appendFn);
@@ -76,7 +76,7 @@ define(['exports', 'metal/src/metal', './dom'], function (exports, _metal, _dom)
 				if (opt_appendFn) {
 					opt_appendFn(style);
 				} else {
-					document.head.appendChild(style);
+					_metal.globals.document.head.appendChild(style);
 				}
 
 				return style;

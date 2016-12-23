@@ -178,6 +178,13 @@ define(['exports', 'metal/src/metal', 'metal-debounce/src/debounce', 'metal-dom/
 			_this.ignoreQueryStringFromRoutePath = false;
 
 			/**
+    * Holds the last state pushed by senna.
+    * @type {?Object}
+    * @protected
+    */
+			_this.lastPushedState = null;
+
+			/**
     * Holds the link selector to define links that are routed.
     * @type {!string}
     * @default a:not([data-senna-off])
@@ -779,6 +786,12 @@ define(['exports', 'metal/src/metal', 'metal-debounce/src/debounce', 'metal-dom/
 				}
 
 				if (state.senna) {
+					// If onPopstate_ is called but the event state is equal to the last
+					// state pushed, that means an external app changed the state in the
+					// mean time and we shouldn't do anything here.
+					if (_metal.object.shallowEqual(state, this.lastPushedState)) {
+						return;
+					}
 					void 0;
 					this.popstateScrollTop = state.scrollTop;
 					this.popstateScrollLeft = state.scrollLeft;
@@ -1000,6 +1013,7 @@ define(['exports', 'metal/src/metal', 'metal-debounce/src/debounce', 'metal-dom/
 					_globals2.default.window.history.pushState(state, title, path);
 				}
 				_globals2.default.document.title = title;
+				this.lastPushedState = state;
 			}
 		}]);
 

@@ -1,10 +1,10 @@
-define(['exports', './core', './array/array', './async/async', './disposable/Disposable', './object/object', './string/string'], function (exports, _core, _array, _async, _Disposable, _object, _string) {
+define(['exports', './core', './array/array', './async/async', './disposable/Disposable', './globals/globals', './object/object', './string/string'], function (exports, _core, _array, _async, _Disposable, _globals, _object, _string) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.string = exports.object = exports.Disposable = exports.async = exports.array = undefined;
+  exports.string = exports.object = exports.globals = exports.Disposable = exports.async = exports.array = undefined;
   Object.keys(_core).forEach(function (key) {
     if (key === "default" || key === "__esModule") return;
     Object.defineProperty(exports, key, {
@@ -23,6 +23,8 @@ define(['exports', './core', './array/array', './async/async', './disposable/Dis
 
   var _Disposable2 = _interopRequireDefault(_Disposable);
 
+  var _globals2 = _interopRequireDefault(_globals);
+
   var _object2 = _interopRequireDefault(_object);
 
   var _string2 = _interopRequireDefault(_string);
@@ -36,6 +38,7 @@ define(['exports', './core', './array/array', './async/async', './disposable/Dis
   exports.array = _array2.default;
   exports.async = _async2.default;
   exports.Disposable = _Disposable2.default;
+  exports.globals = _globals2.default;
   exports.object = _object2.default;
   exports.string = _string2.default;
   exports.default = _core2.default;

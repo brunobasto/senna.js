@@ -957,6 +957,23 @@ describe('App', function() {
 		dom.triggerEvent(globals.window, 'popstate');
 	});
 
+	it('should not navigate when popstate event is dispatched but the last state wasn\'t pushed by senna', (done) => {
+		const beforeNavigate = sinon.stub();
+		this.app = new App();
+		this.app.addRoutes(new Route('/path1', Screen));
+		this.app.on('beforeNavigate', (event) => {
+			beforeNavigate();
+		});
+		this.app.navigate('/path1').then(() => {
+			globals.window.history.pushState({}, '', '/path1?changed=true');
+			dom.once(globals.window, 'popstate', () => {
+				assert.strictEqual(1, beforeNavigate.callCount);
+				done();
+			});
+			globals.window.history.back();
+		});
+	});
+
 	it('should resposition scroll to hashed anchors on hash popstate', (done) => {
 		if (!canScrollIFrame_) {
 			done();

@@ -1,6 +1,6 @@
 'use strict';
 
-import { array, async, core } from 'metal';
+import { array, async, core, object } from 'metal';
 import debounce from 'metal-debounce';
 import dom from 'metal-dom';
 import CancellablePromise from 'metal-promise';
@@ -83,6 +83,13 @@ class App extends EventEmitter {
 		 * @protected
 		 */
 		this.ignoreQueryStringFromRoutePath = false;
+
+		/**
+		 * Holds the last state pushed by senna.
+		 * @type {?Object}
+		 * @protected
+		 */
+		this.lastPushedState = null;
 
 		/**
 		 * Holds the link selector to define links that are routed.
@@ -823,6 +830,12 @@ class App extends EventEmitter {
 		}
 
 		if (state.senna) {
+			// If onPopstate_ is called but the event state is equal to the last
+			// state pushed, that means an external app changed the state in the
+			// mean time and we shouldn't do anything here.
+			if (object.shallowEqual(state, this.lastPushedState)) {
+				return;
+			}
 			console.log('History navigation to [' + state.path + ']');
 			this.popstateScrollTop = state.scrollTop;
 			this.popstateScrollLeft = state.scrollLeft;
@@ -1107,6 +1120,7 @@ class App extends EventEmitter {
 			globals.window.history.pushState(state, title, path);
 		}
 		globals.document.title = title;
+		this.lastPushedState = state;
 	}
 
 }

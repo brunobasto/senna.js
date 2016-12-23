@@ -1,4 +1,4 @@
-define(['exports'], function (exports) {
+define(['exports', '../globals/globals'], function (exports, _globals) {
 	/*!
   * Polyfill from Google's Closure Library.
   * Copyright 2013 The Closure Library Authors. All Rights Reserved.
@@ -9,6 +9,21 @@ define(['exports'], function (exports) {
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
+
+	var _globals2 = _interopRequireDefault(_globals);
+
+	function _interopRequireDefault(obj) {
+		return obj && obj.__esModule ? obj : {
+			default: obj
+		};
+	}
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+		return typeof obj;
+	} : function (obj) {
+		return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+	};
+
 	var async = {};
 
 	/**
@@ -137,7 +152,7 @@ define(['exports'], function (exports) {
 	async.nextTick.getSetImmediateEmulator_ = function () {
 		// Create a private message channel and use it to postMessage empty messages
 		// to ourselves.
-		var Channel;
+		var Channel = void 0;
 
 		// Verify if variable is defined on the current runtime (i.e., node, browser).
 		// Can't use typeof enclosed in a function (such as core.isFunction) or an
@@ -151,14 +166,14 @@ define(['exports'], function (exports) {
 		// an iframe based polyfill in browsers that have postMessage and
 		// document.addEventListener. The latter excludes IE8 because it has a
 		// synchronous postMessage implementation.
-		if (typeof Channel === 'undefined' && typeof window !== 'undefined' && window.postMessage && window.addEventListener) {
+		if (typeof Channel === 'undefined' && typeof _globals2.default.window !== 'undefined' && _globals2.default.window.postMessage && _globals2.default.window.addEventListener) {
 			/** @constructor */
 			Channel = function Channel() {
 				// Make an empty, invisible iframe.
-				var iframe = document.createElement('iframe');
+				var iframe = _globals2.default.document.createElement('iframe');
 				iframe.style.display = 'none';
 				iframe.src = '';
-				document.documentElement.appendChild(iframe);
+				_globals2.default.document.documentElement.appendChild(iframe);
 				var win = iframe.contentWindow;
 				var doc = win.document;
 				doc.open();
@@ -184,29 +199,35 @@ define(['exports'], function (exports) {
 			};
 		}
 		if (typeof Channel !== 'undefined') {
-			var channel = new Channel();
-			// Use a fifo linked list to call callbacks in the right order.
-			var head = {};
-			var tail = head;
-			channel.port1.onmessage = function () {
-				head = head.next;
-				var cb = head.cb;
-				head.cb = null;
-				cb();
-			};
-			return function (cb) {
-				tail.next = {
-					cb: cb
+			var _ret = function () {
+				var channel = new Channel();
+				// Use a fifo linked list to call callbacks in the right order.
+				var head = {};
+				var tail = head;
+				channel.port1.onmessage = function () {
+					head = head.next;
+					var cb = head.cb;
+					head.cb = null;
+					cb();
 				};
-				tail = tail.next;
-				channel.port2.postMessage(0);
-			};
+				return {
+					v: function v(cb) {
+						tail.next = {
+							cb: cb
+						};
+						tail = tail.next;
+						channel.port2.postMessage(0);
+					}
+				};
+			}();
+
+			if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
 		}
 		// Implementation for IE6-8: Script elements fire an asynchronous
 		// onreadystatechange event when inserted into the DOM.
-		if (typeof document !== 'undefined' && 'onreadystatechange' in document.createElement('script')) {
+		if (typeof _globals2.default.document !== 'undefined' && 'onreadystatechange' in _globals2.default.document.createElement('script')) {
 			return function (cb) {
-				var script = document.createElement('script');
+				var script = _globals2.default.document.createElement('script');
 				script.onreadystatechange = function () {
 					// Clean up and call the callback.
 					script.onreadystatechange = null;
@@ -215,7 +236,7 @@ define(['exports'], function (exports) {
 					cb();
 					cb = null;
 				};
-				document.documentElement.appendChild(script);
+				_globals2.default.document.documentElement.appendChild(script);
 			};
 		}
 		// Fall back to setTimeout with 0. In browsers this creates a delay of 5ms

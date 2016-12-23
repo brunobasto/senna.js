@@ -216,11 +216,11 @@ define(['exports', 'metal/src/metal', './domData', './DomDelegatedEventHandle', 
   * @return {!Element} The resulting document fragment.
   */
 	function buildFragment(htmlString) {
-		var tempDiv = document.createElement('div');
+		var tempDiv = _metal.globals.document.createElement('div');
 		tempDiv.innerHTML = '<br>' + htmlString;
 		tempDiv.removeChild(tempDiv.firstChild);
 
-		var fragment = document.createDocumentFragment();
+		var fragment = _metal.globals.document.createDocumentFragment();
 		while (tempDiv.firstChild) {
 			fragment.appendChild(tempDiv.firstChild);
 		}
@@ -308,7 +308,7 @@ define(['exports', 'metal/src/metal', './domData', './DomDelegatedEventHandle', 
   * @param {Element} node Element to remove children from.
   */
 	function enterDocument(node) {
-		node && append(document.body, node);
+		node && append(_metal.globals.document.body, node);
 	}
 
 	/**
@@ -418,7 +418,7 @@ define(['exports', 'metal/src/metal', './domData', './DomDelegatedEventHandle', 
   * @private
   */
 	function matchFallback_(element, selector) {
-		var nodes = document.querySelectorAll(selector, element.parentNode);
+		var nodes = _metal.globals.document.querySelectorAll(selector, element.parentNode);
 		for (var i = 0; i < nodes.length; ++i) {
 			if (nodes[i] === element) {
 				return true;
@@ -468,7 +468,7 @@ define(['exports', 'metal/src/metal', './domData', './DomDelegatedEventHandle', 
   */
 	function on(element, eventName, callback, opt_capture) {
 		if ((0, _metal.isString)(element)) {
-			return delegate(document, eventName, element, callback);
+			return delegate(_metal.globals.document, eventName, element, callback);
 		}
 		var customConfig = customEvents[eventName];
 		if (customConfig && customConfig.event) {
@@ -523,7 +523,7 @@ define(['exports', 'metal/src/metal', './domData', './DomDelegatedEventHandle', 
   * @param {Element} node Element to remove children from.
   */
 	function removeChildren(node) {
-		var child;
+		var child = void 0;
 		while (child = node.firstChild) {
 			node.removeChild(child);
 		}
@@ -601,7 +601,7 @@ define(['exports', 'metal/src/metal', './domData', './DomDelegatedEventHandle', 
   * @private
   */
 	function stopImmediatePropagation_() {
-		var event = this; // jshint ignore:line
+		var event = this; // eslint-disable-line
 		event.stopped = true;
 		event.stoppedImmediate = true;
 		Event.prototype.stopImmediatePropagation.call(event);
@@ -612,7 +612,7 @@ define(['exports', 'metal/src/metal', './domData', './DomDelegatedEventHandle', 
   * @private
   */
 	function stopPropagation_() {
-		var event = this; // jshint ignore:line
+		var event = this; // eslint-disable-line
 		event.stopped = true;
 		Event.prototype.stopPropagation.call(event);
 	}
@@ -630,7 +630,7 @@ define(['exports', 'metal/src/metal', './domData', './DomDelegatedEventHandle', 
 
 		if ((0, _metal.isString)(element)) {
 			if (!elementsByTag_[element]) {
-				elementsByTag_[element] = document.createElement(element);
+				elementsByTag_[element] = _metal.globals.document.createElement(element);
 			}
 			element = elementsByTag_[element];
 		}
@@ -702,9 +702,9 @@ define(['exports', 'metal/src/metal', './domData', './DomDelegatedEventHandle', 
 			return selectorOrElement;
 		} else if ((0, _metal.isString)(selectorOrElement)) {
 			if (selectorOrElement[0] === '#' && selectorOrElement.indexOf(' ') === -1) {
-				return document.getElementById(selectorOrElement.substr(1));
+				return _metal.globals.document.getElementById(selectorOrElement.substr(1));
 			} else {
-				return document.querySelector(selectorOrElement);
+				return _metal.globals.document.querySelector(selectorOrElement);
 			}
 		} else {
 			return null;
@@ -761,9 +761,11 @@ define(['exports', 'metal/src/metal', './domData', './DomDelegatedEventHandle', 
 			var classIndex = elementClassName.indexOf(className);
 
 			if (classIndex === -1) {
-				elementClassName = elementClassName + classes[i] + ' ';
+				elementClassName = '' + elementClassName + classes[i] + ' ';
 			} else {
-				elementClassName = elementClassName.substring(0, classIndex) + ' ' + elementClassName.substring(classIndex + className.length);
+				var before = elementClassName.substring(0, classIndex);
+				var after = elementClassName.substring(classIndex + className.length);
+				elementClassName = before + ' ' + after;
 			}
 		}
 
@@ -800,7 +802,7 @@ define(['exports', 'metal/src/metal', './domData', './DomDelegatedEventHandle', 
   */
 	function triggerEvent(element, eventName, opt_eventObj) {
 		if (isAbleToInteractWith_(element, eventName, opt_eventObj)) {
-			var eventObj = document.createEvent('HTMLEvents');
+			var eventObj = _metal.globals.document.createEvent('HTMLEvents');
 			eventObj.initEvent(eventName, true, true);
 			_metal.object.mixin(eventObj, opt_eventObj);
 			element.dispatchEvent(eventObj);
