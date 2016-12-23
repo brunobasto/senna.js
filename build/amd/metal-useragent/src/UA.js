@@ -1,13 +1,5 @@
-define(['exports'], function (exports) {
+define(['exports', 'metal/src/metal'], function (exports, _metal) {
 	'use strict';
-
-	/**
-  * Metal.js browser user agent detection. It's extremely recommended the usage
-  * of feature checking over browser user agent sniffing. Unfortunately, in some
-  * situations feature checking can be slow or even impossible, therefore use
-  * this utility with caution.
-  * @see <a href="http://www.useragentstring.com/">User agent strings</a>.
-  */
 
 	Object.defineProperty(exports, "__esModule", {
 		value: true
@@ -169,9 +161,7 @@ define(['exports'], function (exports) {
   * @type {object}
   * @static
   */
-	UA.globals = {
-		window: window
-	};
+	UA.globals = _metal.globals;
 
 	UA.testUserAgent(UA.getNativeUserAgent(), UA.getNativePlatform());
 

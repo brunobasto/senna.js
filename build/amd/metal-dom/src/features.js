@@ -63,7 +63,7 @@ define(['exports', './dom', 'metal/src/metal'], function (exports, _dom, _metal)
 			value: function checkAttrOrderChange() {
 				if (features.attrOrderChange_ === undefined) {
 					var originalContent = '<div data-component="" data-ref=""></div>';
-					var element = document.createElement('div');
+					var element = _metal.globals.document.createElement('div');
 					(0, _dom.append)(element, originalContent);
 					features.attrOrderChange_ = originalContent !== element.innerHTML;
 				}
@@ -74,7 +74,7 @@ define(['exports', './dom', 'metal/src/metal'], function (exports, _dom, _metal)
 		return features;
 	}();
 
-	features.animationElement_ = document.createElement('div');
+	features.animationElement_ = _metal.globals.document.createElement('div');
 	features.animationEventName_ = undefined;
 	features.attrOrderChange_ = undefined;
 

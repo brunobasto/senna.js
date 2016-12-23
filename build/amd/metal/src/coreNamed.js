@@ -1,14 +1,10 @@
-define(['exports'], function (exports) {
+define(['exports', './globals/globals'], function (exports, _globals) {
   'use strict';
-
-  /**
-   * A collection of core utility functions.
-   * @const
-   */
 
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
+  exports.UID_PROPERTY = undefined;
   exports.abstractMethod = abstractMethod;
   exports.disableCompatibilityMode = disableCompatibilityMode;
   exports.enableCompatibilityMode = enableCompatibilityMode;
@@ -31,11 +27,24 @@ define(['exports'], function (exports) {
   exports.isString = isString;
   exports.nullFunction = nullFunction;
 
+  var _globals2 = _interopRequireDefault(_globals);
+
+  function _interopRequireDefault(obj) {
+    return obj && obj.__esModule ? obj : {
+      default: obj
+    };
+  }
+
   var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
     return typeof obj;
   } : function (obj) {
     return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
   };
+
+  /**
+   * A collection of core utility functions.
+   * @const
+   */
 
   var compatibilityModeData_ = void 0;
 
@@ -104,8 +113,8 @@ define(['exports'], function (exports) {
   function getCompatibilityModeData() {
     // Compatibility mode can be set via the __METAL_COMPATIBILITY__ global var.
     if (compatibilityModeData_ === undefined) {
-      if (typeof window !== 'undefined' && window.__METAL_COMPATIBILITY__) {
-        enableCompatibilityMode(window.__METAL_COMPATIBILITY__);
+      if (typeof _globals2.default.window !== 'undefined' && _globals2.default.window.__METAL_COMPATIBILITY__) {
+        enableCompatibilityMode(_globals2.default.window.__METAL_COMPATIBILITY__);
       }
     }
     return compatibilityModeData_;
