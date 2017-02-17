@@ -395,7 +395,7 @@ class App extends EventEmitter {
 			})
 			.then(() => nextScreen.evaluateStyles(this.surfaces))
 			.then(() => nextScreen.flip(this.surfaces))
-			.then(() => this.maybeUpdateScrollPositionState(path))
+			.then(() => this.maybeUpdateScrollPositionState())
 			.then(() => nextScreen.evaluateScripts(this.surfaces))
 			.then(() => this.syncScrollPositionSyncThenAsync_())
 			.then(() => this.finalizeNavigate_(path, nextScreen))
@@ -686,14 +686,12 @@ class App extends EventEmitter {
 	 * Maybe update scroll position in history state to anchor on path.
 	 * @param {!string} path Path containing anchor
 	 */
-	maybeUpdateScrollPositionState(path) {
-		var state = globals.window.history.state;
-		var hash = new Uri(path).getHash();
+	maybeUpdateScrollPositionState() {
+		var hash = globals.window.location.hash
+		console.log('hash', hash);
 		var anchorElement = globals.document.getElementById(hash.substring(1));
-		if (anchorElement && state && state.senna) {
-			state.scrollTop = anchorElement.offsetTop;
-			state.scrollLeft = anchorElement.offsetLeft;
-			globals.window.history.replaceState(state, null, null);
+		if (anchorElement) {
+			this.saveHistoryCurrentPageScrollPosition_(anchorElement.offsetLeft, anchorElement.offsetTop);
 		}
 	}
 
@@ -856,7 +854,7 @@ class App extends EventEmitter {
 	 */
 	onScroll_() {
 		if (this.captureScrollPositionFromScrollEvent) {
-			this.saveHistoryCurrentPageScrollPosition_();
+			this.saveHistoryCurrentPageScrollPosition_(globals.window.pageYOffset, globals.window.pageXOffset);
 		}
 	}
 
@@ -991,11 +989,10 @@ class App extends EventEmitter {
 	/**
 	 * Saves scroll position from page offset into history state.
 	 */
-	saveHistoryCurrentPageScrollPosition_() {
+	saveHistoryCurrentPageScrollPosition_(scrollTop, scrollLeft) {
 		var state = globals.window.history.state;
 		if (state && state.senna) {
-			state.scrollTop = globals.window.pageYOffset;
-			state.scrollLeft = globals.window.pageXOffset;
+			[state.scrollTop, state.scrollLeft] = [scrollTop, scrollLeft];
 			globals.window.history.replaceState(state, null, null);
 		}
 	}
