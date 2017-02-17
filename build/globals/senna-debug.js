@@ -358,10 +358,20 @@ babelHelpers;
   }
 
   this['sennaNamed']['coreNamed']['isDocument'] = isDocument; /**
-                                                               * Returns true if value is a dom element.
+                                                               * Returns true if value is a document-fragment.
                                                                * @param {*} val
                                                                * @return {boolean}
                                                                */
+
+  function isDocumentFragment(val) {
+    return val && (typeof val === 'undefined' ? 'undefined' : babelHelpers.typeof(val)) === 'object' && val.nodeType === 11;
+  }
+
+  this['sennaNamed']['coreNamed']['isDocumentFragment'] = isDocumentFragment; /**
+                                                                               * Returns true if value is a dom element.
+                                                                               * @param {*} val
+                                                                               * @return {boolean}
+                                                                               */
 
   function isElement(val) {
     return val && (typeof val === 'undefined' ? 'undefined' : babelHelpers.typeof(val)) === 'object' && val.nodeType === 1;
@@ -483,6 +493,9 @@ babelHelpers;
     * @return {boolean}
     */
 			value: function equal(arr1, arr2) {
+				if (arr1 === arr2) {
+					return true;
+				}
 				if (arr1.length !== arr2.length) {
 					return false;
 				}
@@ -3530,6 +3543,7 @@ babelHelpers;
 (function () {
 	var isDef = this['sennaNamed']['metal']['isDef'];
 	var isDocument = this['sennaNamed']['metal']['isDocument'];
+	var isDocumentFragment = this['sennaNamed']['metal']['isDocumentFragment'];
 	var isElement = this['sennaNamed']['metal']['isElement'];
 	var isObject = this['sennaNamed']['metal']['isObject'];
 	var isString = this['sennaNamed']['metal']['isString'];
@@ -4218,7 +4232,7 @@ babelHelpers;
   * @return {Element} The converted element, or null if none was found.
   */
 	function toElement(selectorOrElement) {
-		if (isElement(selectorOrElement) || isDocument(selectorOrElement)) {
+		if (isElement(selectorOrElement) || isDocument(selectorOrElement) || isDocumentFragment(selectorOrElement)) {
 			return selectorOrElement;
 		} else if (isString(selectorOrElement)) {
 			if (selectorOrElement[0] === '#' && selectorOrElement.indexOf(' ') === -1) {
@@ -7343,7 +7357,7 @@ babelHelpers;
 				}).then(function () {
 					return nextScreen.flip(_this5.surfaces);
 				}).then(function () {
-					return _this5.maybeUpdateScrollPositionState(path);
+					return _this5.maybeUpdateScrollPositionState();
 				}).then(function () {
 					return nextScreen.evaluateScripts(_this5.surfaces);
 				}).then(function () {
@@ -7707,14 +7721,12 @@ babelHelpers;
 
 		}, {
 			key: 'maybeUpdateScrollPositionState',
-			value: function maybeUpdateScrollPositionState(path) {
-				var state = globals.window.history.state;
-				var hash = new Uri(path).getHash();
+			value: function maybeUpdateScrollPositionState() {
+				var hash = globals.window.location.hash;
+				console.log('hash', hash);
 				var anchorElement = globals.document.getElementById(hash.substring(1));
-				if (anchorElement && state && state.senna) {
-					state.scrollTop = anchorElement.offsetTop;
-					state.scrollLeft = anchorElement.offsetLeft;
-					globals.window.history.replaceState(state, null, null);
+				if (anchorElement) {
+					this.saveHistoryCurrentPageScrollPosition_(anchorElement.offsetLeft, anchorElement.offsetTop);
 				}
 			}
 
@@ -7903,7 +7915,7 @@ babelHelpers;
 			key: 'onScroll_',
 			value: function onScroll_() {
 				if (this.captureScrollPositionFromScrollEvent) {
-					this.saveHistoryCurrentPageScrollPosition_();
+					this.saveHistoryCurrentPageScrollPosition_(globals.window.pageYOffset, globals.window.pageXOffset);
 				}
 			}
 
@@ -7998,7 +8010,7 @@ babelHelpers;
 					historyState.scrollTop = this.popstateScrollTop;
 					historyState.scrollLeft = this.popstateScrollLeft;
 				}
-				this.updateHistory_(title, path, nextScreen.beforeUpdateHistoryState(historyState), opt_replaceHistory);
+				this.updateHistory_(title, redirectPath, nextScreen.beforeUpdateHistoryState(historyState), opt_replaceHistory);
 				this.redirectPath = redirectPath;
 			}
 
@@ -8067,11 +8079,13 @@ babelHelpers;
 
 		}, {
 			key: 'saveHistoryCurrentPageScrollPosition_',
-			value: function saveHistoryCurrentPageScrollPosition_() {
+			value: function saveHistoryCurrentPageScrollPosition_(scrollTop, scrollLeft) {
 				var state = globals.window.history.state;
 				if (state && state.senna) {
-					state.scrollTop = globals.window.pageYOffset;
-					state.scrollLeft = globals.window.pageXOffset;
+					var _ref = [scrollTop, scrollLeft];
+					state.scrollTop = _ref[0];
+					state.scrollLeft = _ref[1];
+
 					globals.window.history.replaceState(state, null, null);
 				}
 			}
