@@ -30,6 +30,7 @@ describe('App', function() {
 		if (this.app && !this.app.isDisposed()) {
 			this.app.dispose();
 		}
+		globals.window = window;
 		this.app = null;
 		this.xhr.restore();
 	});
@@ -105,7 +106,6 @@ describe('App', function() {
 			}
 		};
 		assert.strictEqual(false, this.app.canNavigate('/path#hashbang'));
-		globals.window = window;
 	});
 
 	it('should allow navigation for urls with hashbang when navigating to different basepath', () => {
@@ -121,7 +121,6 @@ describe('App', function() {
 			}
 		};
 		assert.strictEqual(true, this.app.canNavigate('/path#hashbang'));
-		globals.window = window;
 	});
 
 	it('should find route for urls with hashbang for different basepath', () => {
@@ -135,7 +134,6 @@ describe('App', function() {
 			}
 		};
 		assert.ok(this.app.findRoute('/pathOther#hashbang'));
-		globals.window = window;
 	});
 
 	it('should find route for urls ending with or without slash', () => {
@@ -150,7 +148,6 @@ describe('App', function() {
 		};
 		assert.ok(this.app.findRoute('/pathOther'));
 		assert.ok(this.app.findRoute('/pathOther/'));
-		globals.window = window;
 	});
 
 	it('should ignore query string on findRoute when ignoreQueryStringFromRoutePath is enabled', () => {
@@ -424,7 +421,6 @@ describe('App', function() {
 		assert.ok(!this.app.canNavigate('http://external/path'));
 		assert.ok(!this.app.canNavigate('tel:+0101010101'));
 		assert.ok(!this.app.canNavigate('mailto:contact@sennajs.com'));
-		globals.window = window;
 	});
 
 	it('should test if can navigate to url with base path ending in "/"', () => {
@@ -446,7 +442,6 @@ describe('App', function() {
 		assert.ok(!this.app.canNavigate('http://localhost/base/path1'));
 		assert.ok(!this.app.canNavigate('http://localhost/path'));
 		assert.ok(!this.app.canNavigate('http://external/path'));
-		globals.window = window;
 	});
 
 	it('should be able to navigate to route that ends with "/"', () => {
@@ -465,7 +460,6 @@ describe('App', function() {
 		assert.ok(this.app.canNavigate('http://localhost/path/'));
 		assert.ok(this.app.canNavigate('http://localhost/path/123'));
 		assert.ok(this.app.canNavigate('http://localhost/path/123/'));
-		globals.window = window;
 	});
 
 	it('should detect a navigation to different port and refresh page', () => {
@@ -483,7 +477,6 @@ describe('App', function() {
 		assert.isFalse(this.app.canNavigate('http://localhost:9081/path/'));
 		assert.isFalse(this.app.canNavigate('http://localhost:9082/path/123'));
 		assert.isFalse(this.app.canNavigate('http://localhost:9083/path/123/'));
-		globals.window = window;
 	});
 
 	it('should store proper senna state after navigate', (done) => {
@@ -1820,28 +1813,27 @@ describe('App', function() {
 			}
 		}
 
-		var app = new App();
-		this.app = app;
-		app.addRoutes(new Route('/path1', CacheScreen));
-		app.addRoutes(new Route('/path2', CacheScreen));
-		app.addRoutes(new Route('/path3', CacheScreen));
+		this.app = new App();
+		this.app.addRoutes(new Route('/path1', CacheScreen));
+		this.app.addRoutes(new Route('/path2', CacheScreen));
+		this.app.addRoutes(new Route('/path3', CacheScreen));
 
-		app.navigate('/path1')
-			.then(() => app.navigate('/path2'))
-			.then(() => app.navigate('/path3'))
+		this.app.navigate('/path1')
+			.then(() => this.app.navigate('/path2'))
+			.then(() => this.app.navigate('/path3'))
 			.then(() => {
 				var pendingNavigate;
-				app.on('startNavigate', () => {
-					pendingNavigate = app.pendingNavigate;
-					assert.ok(app.screens['/path2']);
+				this.app.on('startNavigate', () => {
+					pendingNavigate = this.app.pendingNavigate;
+					assert.ok(this.app.screens['/path2']);
 				});
-				app.once('endNavigate', () => {
-					if (app.isNavigationPending) {
-						assert.ok(!app.screens['/path2']);
+				this.app.once('endNavigate', () => {
+					if (this.app.isNavigationPending) {
+						assert.ok(!this.app.screens['/path2']);
 						done();
 					} else {
 						pendingNavigate.thenAlways(() => {
-							assert.ok(!app.screens['/path2']);
+							assert.ok(!this.app.screens['/path2']);
 							done();
 						});
 						pendingNavigate.cancel();
@@ -1866,11 +1858,13 @@ describe('App', function() {
 		this.app.navigate('/path1#surfaceId1').then(() => {
 			const surfaceNode = document.querySelector('#surfaceId1');
 			const {offsetLeft, offsetTop} = utils.getNodeOffset(surfaceNode);
-			assert.strictEqual(window.pageYOffset, offsetTop);
-			assert.strictEqual(window.pageXOffset, offsetLeft);
-			hidePageScrollbar();
-			dom.exitDocument(parentNode);
-			done();
+			setTimeout(() => {
+				assert.strictEqual(window.pageYOffset, offsetTop);
+				assert.strictEqual(window.pageXOffset, offsetLeft);
+				hidePageScrollbar();
+				dom.exitDocument(parentNode);
+				done();
+			}, 300);
 		});
 	});
 
@@ -1885,16 +1879,18 @@ describe('App', function() {
 				return this.app.navigate('/path2');
 			})
 			.then(() => {
-				assert.strictEqual(utils.getUrlPathWithoutHash(globals.document.referrer), '/path1');
-				return this.app.navigate('/path3');
+				assert.strictEqual(utils.getUrlPathWithoutHash(globals.window.document.referrer), '/path1');
+				return this.app.navigate('/path3')
 			})
 			.then(() => {
 				assert.strictEqual(utils.getUrlPathWithoutHash(globals.document.referrer), '/path2');
 				this.app.on('endNavigate', () => {
-					assert.strictEqual(utils.getUrlPathWithoutHash(globals.document.referrer), '/path1');
+					console.error(globals.document.referrer);
+					assert.strictEqual(utils.getUrlPathWithoutHash(globals.window.document.referrer), '/path1');
 					done();
 				}, true);
 				globals.window.history.back();
+				console.error('history.back occured!');
 			});
 	});
 });

@@ -455,7 +455,7 @@ class App extends EventEmitter {
 
 				if (this.scheduledNavigationQueue.length) {
 					const event = this.scheduledNavigationQueue.shift();
-					this.maybeNavigate_(event.delegateTarget.href, event);
+					this.maybeNavigate_(event.href, event);
 				}
 			});
 	}
@@ -690,6 +690,21 @@ class App extends EventEmitter {
 		}
 	}
 
+	handleNavigateEvent_(event) {
+		if (this.isNavigationPending && this.navigationStrategy === NavigationStrategy.SCHEDULE_LAST) {
+			if (event.preventDefault) {
+				event.preventDefault();
+			}
+
+			this.scheduledNavigationQueue = [
+				object.mixin({
+					isScheduledEvent: event.preventDefault ? true : false
+				}, event)
+			];
+
+		}
+	}
+
 	/**
 	 * Maybe navigate to a path.
 	 * @param {string} href Information about the link's href.
@@ -700,17 +715,9 @@ class App extends EventEmitter {
 			return;
 		}
 
-		if (this.isNavigationPending && this.navigationStrategy === NavigationStrategy.SCHEDULE_LAST) {
-			event.preventDefault();
+		event.href = href;
 
-			this.scheduledNavigationQueue = [
-				object.mixin({
-					isScheduledEvent: true
-				}, event)
-			];
-
-			return;
-		}
+		this.handleNavigateEvent_(event);
 
 		globals.capturedFormElement = event.capturedFormElement;
 		globals.capturedFormButtonElement = event.capturedFormButtonElement;
@@ -985,6 +992,10 @@ class App extends EventEmitter {
 			return;
 		}
 
+		// if (this.scheduledNavigationQueue.length) {
+		// 	return;
+		// }
+
 		// Do not navigate if the popstate was triggered by a hash change.
 		if (utils.isCurrentBrowserPath(this.browserPathBeforeNavigate)) {
 			this.maybeRepositionScrollToHashedAnchor();
@@ -1023,6 +1034,7 @@ class App extends EventEmitter {
 					utils.setReferrer(state.referrer);
 				}
 			});
+			this.handleNavigateEvent_({ href: state.path });
 			this.navigate(state.path, true);
 		}
 	}
