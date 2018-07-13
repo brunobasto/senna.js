@@ -1,7 +1,7 @@
 /**
  * Senna.js - A blazing-fast Single Page Application engine
  * @author Liferay, Inc.
- * @version v2.5.5
+ * @version v2.5.6
  * @link http://sennajs.com
  * @license BSD-3-Clause
  */
@@ -18,7 +18,7 @@ if (typeof window !== 'undefined') {
 }
 
 if (typeof document !== 'undefined') {
-	globals.document = document;
+	globals.document = window.document;
 }
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
@@ -6697,6 +6697,11 @@ Surface.defaultTransition = function (from, to) {
 	}
 };
 
+var NavigationStrategy = {
+	IMMEDIATE: 'immediate',
+	SCHEDULE_LAST: 'scheduleLast'
+};
+
 var App$1 = function (_EventEmitter) {
 	inherits(App, _EventEmitter);
 
@@ -6812,6 +6817,17 @@ var App$1 = function (_EventEmitter) {
 		_this.nativeScrollRestorationSupported = 'scrollRestoration' in globals.window.history;
 
 		/**
+   * When set to NavigationStrategy.SCHEDULE_LAST means that the current navigation
+   * cannot be Cancelled to start another and will be queued in
+   * scheduledNavigationQueue. When NavigationStrategy.IMMEDIATE means that all
+   * navigation will be cancelled to start another.
+   * @type {!string}
+   * @default immediate
+   * @protected
+   */
+		_this.navigationStrategy = NavigationStrategy.IMMEDIATE;
+
+		/**
    * When set to true there is a pendingNavigate that has not yet been
    * resolved or rejected.
    * @type {boolean}
@@ -6860,6 +6876,14 @@ var App$1 = function (_EventEmitter) {
    * @protected
    */
 		_this.routes = [];
+
+		/**
+   * Holds a queue that stores every DOM event that can initiate a navigation.
+   * @type {!Event}
+   * @default []
+   * @protected
+   */
+		_this.scheduledNavigationQueue = [];
 
 		/**
    * Maps the screen instances by the url containing the parameters.
@@ -7119,6 +7143,10 @@ var App$1 = function (_EventEmitter) {
 			}).then(function () {
 				return nextScreen.load(path);
 			}).then(function () {
+				// At this point we cannot stop navigation and all received
+				// navigate candidates will be queued at scheduledNavigationQueue.
+				_this5.navigationStrategy = NavigationStrategy.SCHEDULE_LAST;
+
 				if (_this5.activeScreen) {
 					_this5.activeScreen.deactivate();
 				}
@@ -7142,6 +7170,13 @@ var App$1 = function (_EventEmitter) {
 				_this5.isNavigationPending = false;
 				_this5.handleNavigateError_(path, nextScreen, reason);
 				throw reason;
+			}).thenAlways(function () {
+				_this5.navigationStrategy = NavigationStrategy.IMMEDIATE;
+
+				if (_this5.scheduledNavigationQueue.length) {
+					var event = _this5.scheduledNavigationQueue.shift();
+					_this5.maybeNavigate_(event.href, event);
+				}
 			});
 		}
 
@@ -7432,6 +7467,19 @@ var App$1 = function (_EventEmitter) {
 				globals.window.history.scrollRestoration = 'manual';
 			}
 		}
+	}, {
+		key: 'handleNavigateEvent_',
+		value: function handleNavigateEvent_(event) {
+			if (this.isNavigationPending && this.navigationStrategy === NavigationStrategy.SCHEDULE_LAST) {
+				if (event.preventDefault) {
+					event.preventDefault();
+				}
+
+				this.scheduledNavigationQueue = [object.mixin({
+					isScheduledEvent: event.preventDefault ? true : false
+				}, event)];
+			}
+		}
 
 		/**
    * Maybe navigate to a path.
@@ -7446,6 +7494,10 @@ var App$1 = function (_EventEmitter) {
 				return;
 			}
 
+			event.href = href;
+
+			this.handleNavigateEvent_(event);
+
 			globals.capturedFormElement = event.capturedFormElement;
 			globals.capturedFormButtonElement = event.capturedFormButtonElement;
 
@@ -7457,7 +7509,7 @@ var App$1 = function (_EventEmitter) {
 				navigateFailed = true;
 			}
 
-			if (!navigateFailed) {
+			if (!navigateFailed && !event.isScheduledEvent) {
 				event.preventDefault();
 			}
 		}
@@ -7662,8 +7714,8 @@ var App$1 = function (_EventEmitter) {
 		key: 'onBeforeNavigateDefault_',
 		value: function onBeforeNavigateDefault_(event) {
 			if (this.pendingNavigate) {
-				if (this.pendingNavigate.path === event.path) {
-					console.log('Waiting...');
+				if (this.pendingNavigate.path === event.path || this.navigationStrategy === NavigationStrategy.SCHEDULE_LAST) {
+					console.log('Waiting');
 					return;
 				}
 			}
@@ -7774,6 +7826,10 @@ var App$1 = function (_EventEmitter) {
 				return;
 			}
 
+			if (this.scheduledNavigationQueue.length) {
+				return;
+			}
+
 			// Do not navigate if the popstate was triggered by a hash change.
 			if (utils.isCurrentBrowserPath(this.browserPathBeforeNavigate)) {
 				this.maybeRepositionScrollToHashedAnchor();
@@ -7812,6 +7868,7 @@ var App$1 = function (_EventEmitter) {
 						utils.setReferrer(state.referrer);
 					}
 				});
+				this.handleNavigateEvent_({ href: state.path });
 				this.navigate(state.path, true);
 			}
 		}
@@ -7855,7 +7912,7 @@ var App$1 = function (_EventEmitter) {
 				endNavigatePayload.error = reason;
 				throw reason;
 			}).thenAlways(function () {
-				if (!_this11.pendingNavigate) {
+				if (!_this11.pendingNavigate && !_this11.scheduledNavigationQueue.length) {
 					removeClasses(globals.document.documentElement, _this11.loadingCssClass);
 					_this11.maybeRestoreNativeScrollRestoration();
 					_this11.captureScrollPositionFromScrollEvent = true;
@@ -8111,8 +8168,8 @@ var App$1 = function (_EventEmitter) {
 		value: function stopPendingNavigate_() {
 			if (this.pendingNavigate) {
 				this.pendingNavigate.cancel('Cancel pending navigation');
-				this.pendingNavigate = null;
 			}
+			this.pendingNavigate = null;
 		}
 
 		/**
@@ -9706,7 +9763,7 @@ globals.document.addEventListener('DOMContentLoaded', function () {
 /**
  * @returns String current senna version
  */
-var version = '2.5.5';
+var version = '2.5.6';
 
 exports['default'] = App$1;
 exports.dataAttributeHandler = dataAttributeHandler;
